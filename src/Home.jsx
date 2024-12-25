@@ -40,7 +40,7 @@ const Home = () => {
         </Carousel>
       </div>
       <div className="row pt-5">
-        <div className="col-3 d-flex justify-content-center">
+        <div className="col-lg-3 col-md-6 col-sm-12 d-flex justify-content-center">
           <Card className='col-11'>
             <Card.Img variant="top" src={Icard} />
             <Card.Body>
@@ -54,7 +54,7 @@ const Home = () => {
             </Card.Body>
           </Card>
         </div>
-        <div className="col-3 d-flex justify-content-center">
+        <div className="col-lg-3 col-md-6 col-sm-12 d-flex justify-content-center">
           <Card className='col-11'>
             <Card.Img variant="top" src={Icard} />
             <Card.Body>
@@ -68,7 +68,7 @@ const Home = () => {
             </Card.Body>
           </Card>
         </div>
-        <div className="col-3 d-flex justify-content-center">
+        <div className="col-lg-3 col-md-6 col-sm-12 d-flex justify-content-center">
           <Card className='col-11'>
             <Card.Img variant="top" src={Icard} />
             <Card.Body>
@@ -82,7 +82,7 @@ const Home = () => {
             </Card.Body>
           </Card>
         </div>
-        <div className="col-3 d-flex justify-content-center">
+        <div className="col-lg-3 col-md-6 col-sm-12 d-flex justify-content-center">
           <Card className='col-11'>
             <Card.Img variant="top" src={Icard} />
             <Card.Body>
