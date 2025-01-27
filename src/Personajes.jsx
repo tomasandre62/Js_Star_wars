@@ -2,41 +2,58 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Container, Row, Col, Card, Button, Dropdown } from 'react-bootstrap';
 
-
 const Personajes = () => {
   const [personajes, setPersonajes] = useState([]);
   const [favoritos, setFavoritos] = useState([]);
 
   useEffect(() => {
     const fetchPersonajes = async () => {
-      const response = await axios.get('https://swapi.tech/api/people/');
-      setPersonajes(response.data.results);
-      const favoritosGuardados = JSON.parse(localStorage.getItem('favoritos')) || [];
-      setFavoritos(favoritosGuardados);
+      try {
+        const response = await axios.get('http://localhost:5000/people');
+        setPersonajes(response.data);
+        const responseFavoritos = await axios.get('http://localhost:5000/users/favorites?usuario_id=1');
+        setFavoritos(responseFavoritos.data.filter(fav => fav.personaje_id).map(fav => fav.personaje_id));
+      } catch (error) {
+        console.error("Error al obtener los personajes:", error);
+      }
     };
 
     fetchPersonajes();
   }, []);
-  
 
-  const handleFavorito = (personaje) => {
-    const nuevosFavoritos = [...favoritos];
-    const indice = nuevosFavoritos.indexOf(personaje.uid);
-    if (indice !== -1) {
-      nuevosFavoritos.splice(indice, 1);
-    } else {
-      nuevosFavoritos.push(personaje.uid);
+  const handleFavorito = async (personaje) => {
+    try {
+      let nuevosFavoritos = [...favoritos];
+      if (favoritos.includes(personaje.id)) {
+        await axios.delete(`http://localhost:5000/favorite/character/${personaje.id}`, { data: { usuario_id: 1 } });
+        nuevosFavoritos = nuevosFavoritos.filter(id => id !== personaje.id);
+      } else {
+        await axios.post(`http://localhost:5000/favorite/character/${personaje.id}`, { usuario_id: 1 });
+        nuevosFavoritos.push(personaje.id);
+      }
+      setFavoritos(nuevosFavoritos);
+    } catch (error) {
+      console.error("Error al gestionar favorito:", error);
     }
-    setFavoritos(nuevosFavoritos);
-    localStorage.setItem('favoritos', JSON.stringify(nuevosFavoritos));
   };
 
-  const handleEliminarFavorito = (id) => {
-    const nuevosFavoritos = favoritos.filter((favId) => favId !== id);
-    setFavoritos(nuevosFavoritos);
-    localStorage.setItem('favoritos', JSON.stringify(nuevosFavoritos));
+  const handleEliminarFavorito = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/favorite/character/${id}`, { data: { usuario_id: 1 } });
+      setFavoritos(favoritos.filter(favId => favId !== id));
+    } catch (error) {
+      console.error("Error al eliminar favorito:", error);
+    }
   };
 
+  const handleBorrar = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/people/${id}`);
+      setPersonajes(personajes.filter(personaje => personaje.id !== id));
+    } catch (error) {
+      console.error("Error al borrar el personaje:", error);
+    }
+  };
 
   return (
     <Container>
@@ -46,47 +63,40 @@ const Personajes = () => {
         </Dropdown.Toggle>
         <Dropdown.Menu>
           {favoritos.map((id) => {
-            const personajeFavorito = personajes.find((p) => p.uid === id);
+            const personajeFavorito = personajes.find((p) => p.id === id);
             return (
-              <Dropdown.Item key={id}>
-                <a
-                  href={`/personajes/${personajeFavorito.uid}`}
-                  onClick={(e) => {
-                    e.preventDefault(); 
-                    window.location.href = `/personajes/${personajeFavorito.uid}`; 
-                    e.stopPropagation(); 
-                  }}
-                >
-                  {personajeFavorito.name}
-                </a>
-                <Button style={{ marginLeft: '5px' }} variant="link" size="sm" onClick={(e) => {
-                  e.stopPropagation(); handleEliminarFavorito(id);
-                }}>
-                  <i className="fa-solid fa-trash"></i>
-                </Button>
-              </Dropdown.Item>
+              personajeFavorito && (
+                <Dropdown.Item key={id}>
+                  <div>
+                    {personajeFavorito.nombre}
+                    <Button style={{ marginLeft: '5px' }} variant="link" size="sm" onClick={(e) => {
+                      e.stopPropagation(); handleEliminarFavorito(id);
+                    }}>
+                      <i className="fa-solid fa-trash"></i>
+                    </Button>
+                  </div>
+                </Dropdown.Item>
+              )
             );
           })}
         </Dropdown.Menu>
       </Dropdown>
       <Row>
         {personajes.map(personaje => (
-          <Col className='p-2' key={personaje.uid} xs={12} md={6} lg={4}>
+          <Col className='p-2' key={personaje.id} xs={12} md={6} lg={4}>
             <Card>
-              <Card.Img variant="top" src={`https://starwars-visualguide.com/assets/img/characters/${personaje.uid}.jpg`} onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/150"; }} />
+              <Card.Img variant="top" src={`https://starwars-visualguide.com/assets/img/characters/${personaje.id}.jpg`} onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/150"; }} />
               <Card.Body>
-                <Card.Title>{personaje.name}</Card.Title>
+                <Card.Title>{personaje.nombre}</Card.Title>
               </Card.Body>
               <Row className='d-flex justify-content-start p-2'>
-                <Col className='col-5'>
-                  <a href={`/personajes/${personaje.uid}`}>
-                    <Button variant="primary">Ver Detalles</Button>
-                  </a>
+                <Col className='col-2'>
+                  <Button variant={favoritos.includes(personaje.id) ? 'warning' : 'primary'} onClick={() => handleFavorito(personaje)}>
+                    {favoritos.includes(personaje.id) ? <i className="fa-solid fa-heart"></i> : <i className="fa-regular fa-heart"></i>}
+                  </Button>
                 </Col>
                 <Col className='col-2'>
-                  <Button variant={favoritos.includes(personaje.uid) ? 'warning' : 'primary'} onClick={() => handleFavorito(personaje)}>
-                    {favoritos.includes(personaje.uid) ? <i class="fa-solid fa-heart"></i> : <i class="fa-regular fa-heart"></i>}
-                  </Button>
+                  <Button variant="danger" onClick={() => handleBorrar(personaje.id)}>Borrar</Button>
                 </Col>
               </Row>
             </Card>
@@ -97,4 +107,4 @@ const Personajes = () => {
   );
 }
 
-export default Personajes
+export default Personajes;
